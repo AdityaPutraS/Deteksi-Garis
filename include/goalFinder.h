@@ -69,6 +69,8 @@ public:
   v4i adaGawang();
   //Mereturn 4-tuple koordinat kotak gawang
 
+  void showData();
+
   bool adaGarisUjung();
   //return true jika ketemu garis ujung
 };

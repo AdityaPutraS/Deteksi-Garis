@@ -5,6 +5,7 @@
 #include "opencv2/highgui.hpp"
 #include "opencv2/opencv.hpp"
 #include "include/goalFinder.h"
+#include <curses.h>
 
 using namespace std;
 using namespace cv;
@@ -18,25 +19,25 @@ goalFinder::~goalFinder() {}
 void goalFinder::setGambar(Mat x)
 {
     x.copyTo(gambar);
-    //cvtColor(gambar, gambar, CV_BGR2HSV);
+    cvtColor(gambar, gambar, CV_BGR2YUV);
 }
 
 void goalFinder::init()
 {
-    minY = 215;
+    minY = 102;
     maxY = 255;
-    minU = 0;
+    minU = 115;
     maxU = 255;
-    minV = 0;
+    minV = 131;
     maxV = 255;
     sizeVer = 3;
     erodeCount = 2;
     dilateCount = 3;
-    thresHLT = 56;
+    thresHLT = 47;
     structSize = 2;
-    epsilonHapus = 50;
+    epsilonHapus = 500;
     apertureSize = 0;
-    thetaGabor = 0;
+    thetaGabor = 25;
     initWindow();
     initTrackbar();
 }
@@ -52,16 +53,16 @@ void goalFinder::initTrackbar()
 {
     //Morph
     createTrackbar("Min Y", "Properties", &minY, 255, on_trackbar);
-    //createTrackbar("Min U", "Properties", &minU, 255, on_trackbar);
-    //createTrackbar("Min V", "Properties", &minV, 255, on_trackbar);
+    createTrackbar("Min U", "Properties", &minU, 255, on_trackbar);
+    createTrackbar("Min V", "Properties", &minV, 255, on_trackbar);
     createTrackbar("Max Y", "Properties", &maxY, 255, on_trackbar);
-    //createTrackbar("Max U", "Properties", &maxU, 255, on_trackbar);
-    //createTrackbar("Max V", "Properties", &maxV, 255, on_trackbar);
+    createTrackbar("Max U", "Properties", &maxU, 255, on_trackbar);
+    createTrackbar("Max V", "Properties", &maxV, 255, on_trackbar);
     //createTrackbar("Structure Size", "Properties", &structSize, 7, on_trackbar);
     createTrackbar("Structure Size Vertikal", "Properties", &sizeVer, 10, on_trackbar);
     createTrackbar("Banyak Erosi", "Properties", &erodeCount, 7, on_trackbar);
     createTrackbar("Banyak Dilasi", "Properties", &dilateCount, 7, on_trackbar);
-    createTrackbar("Theta", "Properties", &thetaGabor, 360, on_trackbar);
+    createTrackbar("Theta", "Properties", &thetaGabor, 180, on_trackbar);
     //Hough Line Transform
     createTrackbar("Thresold HLT", "Properties", &thresHLT, 200, on_trackbar);
     createTrackbar("Epsilon Hapus", "Properties", &epsilonHapus, 500, on_trackbar);
@@ -80,7 +81,7 @@ void goalFinder::morphOps()
 {
     gambar.copyTo(hasilMorph);
     //Ambil warna putih saja
-    inRange(hasilMorph, Scalar(minY, 0, 0), Scalar(maxY, 255, 255), hasilMorph);
+    inRange(hasilMorph, Scalar(minY, minU, minV), Scalar(maxY, maxU, maxV), hasilMorph);
 
     //Erode & Dilatasi gambar
     //Mat strElem = getStructuringElement(CV_SHAPE_RECT, Size(structSize, structSize), Point(0, 0));
@@ -107,8 +108,12 @@ void goalFinder::morphOps()
 
 void goalFinder::gabor()
 {
-    Mat gaborKernel = getGaborKernel(Size(3, 3), 3, (double)thetaGabor / 360 * CV_2PI, 12, 1);
-    filter2D(hasilMorph, hasilGabor, CV_8U, gaborKernel);
+    Mat hasilGabor1,hasilGabor2;
+    Mat gaborKernel1 = getGaborKernel(Size(3, 3), 3, (double)thetaGabor / 360 * CV_2PI, 12, 1);
+    filter2D(hasilMorph, hasilGabor1, hasilMorph.depth(), gaborKernel1);
+    Mat gaborKernel2 = getGaborKernel(Size(3, 3), 3, (double)(thetaGabor+180) / 360 * CV_2PI, 12, 1);
+    filter2D(hasilMorph, hasilGabor2, hasilMorph.depth(), gaborKernel2);
+    addWeighted(hasilGabor1,1,hasilGabor2,1,0,hasilGabor);
     inRange(hasilGabor, Scalar(minY, minU, minV), Scalar(maxY, maxU, maxV), hasilMorph);
 }
 
@@ -131,6 +136,8 @@ void goalFinder::HLP()
 void goalFinder::garisToPoint()
 {
     listGaris.clear();
+    int tx = gambar.size[1];
+    int ty = gambar.size[0];
     for (auto g1 : garis)
     {
         float rho = g1[0], theta = g1[1];
@@ -219,11 +226,23 @@ void goalFinder::klasifikasiGarisDanTampil()
             }
         }
     }
-    cout << "Vertikal : "<< vertikal.size() << endl;
-    cout << "Horizontal : "<< horizontal.size() << endl;
-    cout << "Total Garis : "<< listGaris.size() << endl;
+    
 }
 
+void goalFinder::showData()
+{
+    clear();
+    mvprintw(1, 0, "===================================================");
+    mvprintw(2, 15, "Data Goal Finder");
+    mvprintw(3, 0, "===================================================");
+    mvprintw(5, 1, "Y : %d - %d", minY, maxY);
+    mvprintw(6, 1, "U : %d - %d", minU, maxU);
+    mvprintw(7, 1, "V : %d - %d", minV, maxV);
+    mvprintw(9,1,"Vertikal : %d",vertikal.size());
+    mvprintw(10,1,"Horizontal : %d", horizontal.size());
+    mvprintw(11,1,"Total Garis : %d",listGaris.size());
+    refresh();
+}
 
 v4i goalFinder::adaGawang()
 {
