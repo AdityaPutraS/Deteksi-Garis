@@ -20,6 +20,7 @@ using namespace cv;
 class goalFinder
 {
 private:
+  enum state {NO_GAWANG, SATU_TIANG, DUA_TIANG};
   Mat gambar, hasilMorph,hasilGabor, hasilCanny, hasilHLT;
   v2f garis;
   v4i horizontal,vertikal,listGaris;
@@ -66,13 +67,13 @@ public:
   void normalisasiGaris();
   void klasifikasiGarisDanTampil();
 
-  v4i adaGawang();
+  void adaGawang();
   //Mereturn 4-tuple koordinat kotak gawang
 
   void showData();
 
   bool adaGarisUjung();
-  //return true jika ketemu garis ujung
+  //ketemu garis ujung
 };
 
 #endif

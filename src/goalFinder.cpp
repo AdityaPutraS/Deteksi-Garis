@@ -26,18 +26,18 @@ void goalFinder::init()
 {
     minY = 102;
     maxY = 255;
-    minU = 115;
+    minU = 0;
     maxU = 255;
-    minV = 131;
+    minV = 0;
     maxV = 255;
-    sizeVer = 3;
+    sizeVer = 0;
     erodeCount = 2;
     dilateCount = 3;
     thresHLT = 47;
     structSize = 2;
     epsilonHapus = 500;
     apertureSize = 0;
-    thetaGabor = 25;
+    thetaGabor = 60;
     initWindow();
     initTrackbar();
 }
@@ -108,12 +108,15 @@ void goalFinder::morphOps()
 
 void goalFinder::gabor()
 {
-    Mat hasilGabor1,hasilGabor2;
+    Mat hasilGabor1, hasilGabor2,hasilGabor3;
     Mat gaborKernel1 = getGaborKernel(Size(3, 3), 3, (double)thetaGabor / 360 * CV_2PI, 12, 1);
     filter2D(hasilMorph, hasilGabor1, hasilMorph.depth(), gaborKernel1);
-    Mat gaborKernel2 = getGaborKernel(Size(3, 3), 3, (double)(thetaGabor+180) / 360 * CV_2PI, 12, 1);
+    Mat gaborKernel2 = getGaborKernel(Size(3, 3), 3, (double)(thetaGabor + 180) / 360 * CV_2PI, 12, 1);
     filter2D(hasilMorph, hasilGabor2, hasilMorph.depth(), gaborKernel2);
-    addWeighted(hasilGabor1,1,hasilGabor2,1,0,hasilGabor);
+    Mat gaborKernel3 = getGaborKernel(Size(3, 3), 3, (double)(thetaGabor+90) / 360 * CV_2PI, 12, 1);
+    filter2D(hasilMorph, hasilGabor3, hasilMorph.depth(), gaborKernel3);
+    addWeighted(hasilGabor1, 1, hasilGabor2, 1, 0, hasilGabor);
+    //addWeighted(hasilGabor,1,hasilGabor3,1,0,hasilGabor);
     inRange(hasilGabor, Scalar(minY, minU, minV), Scalar(maxY, maxU, maxV), hasilMorph);
 }
 
@@ -169,13 +172,23 @@ void goalFinder::normalisasiGaris()
         {
             //Taruh koordinat di titik sementara
             Vec4i g1 = listGaris[i];
-            Point2f P1 = Point2f(g1[0], g1[1]), P2 = Point2f(g1[2], g1[3]);
+            Point2i P1,P2;
+            if(g1[1] < g1[3]){
+                P1 = Point2f(g1[0], g1[1]), P2 = Point2f(g1[2], g1[3]);
+            }else{
+                P1 = Point2f(g1[2], g1[3]), P2 = Point2f(g1[0], g1[1]);
+            }
             for (int j = i + 1; j < ukuran; j++)
             {
                 if (!akanDihapus[j])
                 {
                     Vec4i g2 = listGaris[j];
-                    Point2f P3 = Point2f(g2[0], g2[1]), P4 = Point2f(g2[2], g2[3]);
+                    Point2f P3,P4;
+                    if(g2[1] < g2[3]){
+                        P3 = Point2f(g2[0], g2[1]), P4 = Point2f(g2[2], g2[3]);
+                    }else{
+                        P3 = Point2f(g2[2],g2[3]), P4 = Point2f(g2[0],g2[1]);
+                    }
                     //Cari delta X dari kedua garis vertikal
                     double deltaGarisAtas = abs(P1.x - P3.x), deltaGarisBawah = abs(P2.x - P4.x);
                     if (deltaGarisAtas <= epsilonHapus && deltaGarisBawah <= epsilonHapus)
@@ -212,7 +225,7 @@ void goalFinder::klasifikasiGarisDanTampil()
         {
             //Vertikal
             vertikal.push_back(g1);
-            line(hasilHLT,P1,P2,Scalar(255,0,0),4);
+            line(hasilHLT, P1, P2, Scalar(255, 0, 0), 4);
         }
         else
         {
@@ -220,13 +233,14 @@ void goalFinder::klasifikasiGarisDanTampil()
             {
                 //Horizontal
                 horizontal.push_back(g1);
-                line(hasilHLT,P1,P2,Scalar(0,255,0),4);
-            }else{
-                line(hasilHLT,P1,P2,Scalar(255,255,255),4);
+                line(hasilHLT, P1, P2, Scalar(0, 255, 0), 4);
+            }
+            else
+            {
+                line(hasilHLT, P1, P2, Scalar(255, 255, 255), 4);
             }
         }
     }
-    
 }
 
 void goalFinder::showData()
@@ -238,12 +252,37 @@ void goalFinder::showData()
     mvprintw(5, 1, "Y : %d - %d", minY, maxY);
     mvprintw(6, 1, "U : %d - %d", minU, maxU);
     mvprintw(7, 1, "V : %d - %d", minV, maxV);
-    mvprintw(9,1,"Vertikal : %d",vertikal.size());
-    mvprintw(10,1,"Horizontal : %d", horizontal.size());
-    mvprintw(11,1,"Total Garis : %d",listGaris.size());
+    mvprintw(9, 1, "Vertikal : %d", vertikal.size());
+    mvprintw(10, 1, "Horizontal : %d", horizontal.size());
+    mvprintw(11, 1, "Total Garis : %d", listGaris.size());
+    mvprintw(5, 15, "Data Garis Vertikal");
+    for (int i = 0; i < vertikal.size(); i++)
+    {
+        Vec4i garis = vertikal[i];
+        mvprintw(6 + i, 15, "%d %d %d %d", garis[0], garis[1], garis[2], garis[3]);
+    }
+    mvprintw(5, 40, "Data Garis Horizontal");
+    for (int i = 0; i < horizontal.size(); i++)
+    {
+        Vec4i garis = horizontal[i];
+        mvprintw(6 + i, 40, "%d %d %d %d", garis[0], garis[1], garis[2], garis[3]);
+    }
     refresh();
+    //circle(hasilHLT,Point2i(300,200),7,Scalar(0,0,255),2);
 }
 
-v4i goalFinder::adaGawang()
+void goalFinder::adaGawang()
 {
+    for(int i = 0;i < vertikal.size();i++)
+    {
+        Vec4i g1 = vertikal[i];
+        int midX = (g1[2]+g1[0])/2;
+        for(int j = 0;j < horizontal.size();j++)
+        {
+            Vec4i g2 = horizontal[i];
+            int midY = (g2[3]+g2[1])/2;
+            Point2i tipot = Point2i(midX,midY);
+            circle(hasilHLT,tipot,5,Scalar(0,0,255),2);
+        }
+    }
 }

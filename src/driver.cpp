@@ -41,7 +41,8 @@ int main()
             gF.canny();
             //Cari garis
             gF.HLP();
-            gF.showData();
+            gF.adaGawang();
+            gF.showData();  
             gF.showImage();
             /*
             pC.setGambar(gambar);

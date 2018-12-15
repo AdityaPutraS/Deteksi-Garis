@@ -26,6 +26,7 @@ class positionChecker
     int thetaGabor;
     int minXLap,minYLap,maxXLap,maxYLap;
     long double tempAVGBaris,tempAVGKolom;
+    Vec4i titikGawang;
   public:
     //Constructor
     positionChecker();
