@@ -9,11 +9,12 @@
 using namespace std;
 using namespace cv;
 
-int main()
+int main(int argc,  char** argv)
 {
     VideoCapture cap;
     string namaVideo = "Video Test/crossbar(360).mp4";
-    if (!cap.open(0))
+    int nomorKamera = argv[0][0] - '0';
+    if (!cap.open(nomorKamera))
     {
         cout << "Gagal buka";
         return 0;

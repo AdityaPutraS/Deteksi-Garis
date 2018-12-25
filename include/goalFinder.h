@@ -1,3 +1,8 @@
+/*
+ *  Author :
+ *  Aditya Putra Santosa
+ *  13517013
+ */
 #ifndef GOAL_FINDER
 #define GOAL_FINDER
 

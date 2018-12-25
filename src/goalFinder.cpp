@@ -1,3 +1,8 @@
+/*
+ *  Author :
+ *  Aditya Putra Santosa
+ *  13517013
+ */
 #include <iostream>
 #include <vector>
 #include "opencv2/core.hpp"
@@ -159,10 +164,9 @@ void goalFinder::garisToPoint()
 void goalFinder::normalisasiGaris()
 {
     //Normalisasi garis vertikal hasil hough line transform
-    //Mengganti semua garis yang menjadi 1
+    //Mengganti semua garis yang dekat menjadi 1
     //Definisi dekat adalah deltaX titik atas garis dan titik bawah garis <= epsilon
-    //TODO : Ganti StrukDat listGaris dari Vector jadi Double Linked-List
-    //Karena Double Linked List lebih efisien masalah penghapusan
+    //Atau bisa juga deltaY titik kiri garis dan titik kanan garis <= epsilon
     long int ukuran = listGaris.size();
     bool akanDihapus[ukuran];
     memset(akanDihapus, false, ukuran);
@@ -172,26 +176,47 @@ void goalFinder::normalisasiGaris()
         {
             //Taruh koordinat di titik sementara
             Vec4i g1 = listGaris[i];
-            Point2i P1,P2;
+            Point2i P1Ver,P2Ver;
+            //Untuk cek vertikal
             if(g1[1] < g1[3]){
-                P1 = Point2f(g1[0], g1[1]), P2 = Point2f(g1[2], g1[3]);
+                P1Ver = Point2f(g1[0], g1[1]), P2Ver = Point2f(g1[2], g1[3]);
             }else{
-                P1 = Point2f(g1[2], g1[3]), P2 = Point2f(g1[0], g1[1]);
+                P1Ver = Point2f(g1[2], g1[3]), P2Ver = Point2f(g1[0], g1[1]);
+            }
+            //Untuk cek horizontal
+            Point2i P1Hor, P2Hor;
+            if(g1[0] < g1[2])
+            {
+                P1Hor = Point2f(g1[0], g1[1]), P2Hor = Point2f(g1[2], g1[3]);
+            }else{
+                P1Hor = Point2f(g1[2], g1[3]), P2Hor = Point2f(g1[0], g1[1]);
             }
             for (int j = i + 1; j < ukuran; j++)
             {
                 if (!akanDihapus[j])
                 {
                     Vec4i g2 = listGaris[j];
-                    Point2f P3,P4;
+                    //Untuk cek vertikal
+                    Point2f P3Ver,P4Ver;
                     if(g2[1] < g2[3]){
-                        P3 = Point2f(g2[0], g2[1]), P4 = Point2f(g2[2], g2[3]);
+                        P3Ver = Point2f(g2[0], g2[1]), P4Ver = Point2f(g2[2], g2[3]);
                     }else{
-                        P3 = Point2f(g2[2],g2[3]), P4 = Point2f(g2[0],g2[1]);
+                        P3Ver = Point2f(g2[2],g2[3]), P4Ver = Point2f(g2[0],g2[1]);
+                    }
+                    //Untuk cek horizontal
+                    Point2f P3Hor,P4Hor;
+                    if(g2[1] < g2[3]){
+                        P3Hor = Point2f(g2[0], g2[1]), P4Hor = Point2f(g2[2], g2[3]);
+                    }else{
+                        P3Hor = Point2f(g2[2],g2[3]), P4Hor = Point2f(g2[0],g2[1]);
                     }
                     //Cari delta X dari kedua garis vertikal
-                    double deltaGarisAtas = abs(P1.x - P3.x), deltaGarisBawah = abs(P2.x - P4.x);
-                    if (deltaGarisAtas <= epsilonHapus && deltaGarisBawah <= epsilonHapus)
+                    double deltaGarisAtas = abs(P1Ver.x - P3Ver.x), deltaGarisBawah = abs(P2Ver.x - P4Ver.x);
+                    double deltaGarisKiri = abs(P1Hor.y - P3Hor.y), deltaGarisKanan = abs(P2Hor.y - P4Hor.y);
+                    if (
+                            (deltaGarisAtas <= epsilonHapus && deltaGarisBawah <= epsilonHapus) ||
+                            (deltaGarisKiri <= epsilonHapus && deltaGarisKanan <= epsilonHapus)
+                        )
                     {
                         //Hapus dari vector
                         akanDihapus[j] = true;
@@ -271,17 +296,26 @@ void goalFinder::showData()
     //circle(hasilHLT,Point2i(300,200),7,Scalar(0,0,255),2);
 }
 
+
 void goalFinder::adaGawang()
 {
     for(int i = 0;i < vertikal.size();i++)
     {
         Vec4i g1 = vertikal[i];
-        int midX = (g1[2]+g1[0])/2;
+        int xPos, yPos;
+        Point2i P1 = Point2i(g1[0],g1[1]);
+        Point2i P2 = Point2i(g1[2],g1[3]);
         for(int j = 0;j < horizontal.size();j++)
         {
             Vec4i g2 = horizontal[i];
-            int midY = (g2[3]+g2[1])/2;
-            Point2i tipot = Point2i(midX,midY);
+            Point2i P3 = Point2i(g2[0],g2[1]);
+            Point2i P4 = Point2i(g2[2],g2[3]);
+            xPos = (P1.x*P2.y-P1.y*P2.x)*(P3.x-P4.x) - (P1.x-P2.x)*(P3.x*P4.y-P3.y*P4.x);
+            yPos = (P1.x*P2.y-P1.y*P2.x)*(P3.y-P4.y) - (P1.y-P2.y)*(P3.x*P4.y-P3.y*P4.x);
+            double pembagi = (P1.x-P2.x)*(P3.y-P4.y)-(P1.y-P2.y)*(P3.x-P4.x);
+            xPos /= pembagi;
+            yPos /= pembagi;
+            Point2i tipot = Point2i(xPos,yPos);
             circle(hasilHLT,tipot,5,Scalar(0,0,255),2);
         }
     }
