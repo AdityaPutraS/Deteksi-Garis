@@ -15,6 +15,9 @@
 using namespace std;
 using namespace cv;
 
+goalFinder* goalFinder::m_UniqueInstance = new goalFinder();
+
+
 //Constructor
 goalFinder::goalFinder() {}
 
@@ -46,6 +49,51 @@ void goalFinder::init()
     initWindow();
     initTrackbar();
 }
+void goalFinder::init(minIni* ini)
+{
+    loadINI(ini);
+    initWindow();
+    initTrackbar();
+}
+
+void goalFinder::loadINI(minIni* ini)
+{
+    int value = 0;
+    if((value = ini->geti("Goal finder", "minY", INVALID_VALUE)) != INVALID_VALUE)  minY  = value;
+    if((value = ini->geti("Goal finder", "maxY", INVALID_VALUE)) != INVALID_VALUE)  maxY  = value;
+    if((value = ini->geti("Goal finder", "minU", INVALID_VALUE)) != INVALID_VALUE)  minU  = value;
+    if((value = ini->geti("Goal finder", "maxU", INVALID_VALUE)) != INVALID_VALUE)  maxU  = value;
+    if((value = ini->geti("Goal finder", "minV", INVALID_VALUE)) != INVALID_VALUE)  minV  = value;
+    if((value = ini->geti("Goal finder", "maxV", INVALID_VALUE)) != INVALID_VALUE)  maxV  = value;
+    if((value = ini->geti("Goal finder", "sizeVer", INVALID_VALUE)) != INVALID_VALUE)  sizeVer  = value;
+    if((value = ini->geti("Goal finder", "erodeCount", INVALID_VALUE)) != INVALID_VALUE)  erodeCount  = value;
+    if((value = ini->geti("Goal finder", "dilateCount", INVALID_VALUE)) != INVALID_VALUE)  dilateCount  = value;
+    if((value = ini->geti("Goal finder", "thresHLT", INVALID_VALUE)) != INVALID_VALUE)  thresHLT  = value;
+    if((value = ini->geti("Goal finder", "structSize", INVALID_VALUE)) != INVALID_VALUE)  structSize  = value;
+    if((value = ini->geti("Goal finder", "epsilonHapus", INVALID_VALUE)) != INVALID_VALUE)  epsilonHapus  = value;
+    if((value = ini->geti("Goal finder", "apertureSize", INVALID_VALUE)) != INVALID_VALUE)  apertureSize  = value;
+    if((value = ini->geti("Goal finder", "thetaGabor", INVALID_VALUE)) != INVALID_VALUE)  thetaGabor  = value;
+}
+
+void goalFinder::saveINI(minIni* ini)
+{
+    ini->put("Goal Finder", "minY",  minY );
+    ini->put("Goal Finder", "maxY",  maxY );
+    ini->put("Goal Finder", "minU",  minU );
+    ini->put("Goal Finder", "maxU",  maxU );
+    ini->put("Goal Finder", "minV",  minV );
+    ini->put("Goal Finder", "maxV",  maxV );
+    ini->put("Goal Finder", "sizeVer",  sizeVer );
+    ini->put("Goal Finder", "erodeCount",  erodeCount );
+    ini->put("Goal Finder", "dilateCount",  dilateCount );
+    ini->put("Goal Finder", "thresHLT",  thresHLT );
+    ini->put("Goal Finder", "structSize",  structSize );
+    ini->put("Goal Finder", "epsilonHapus",  epsilonHapus );
+    ini->put("Goal Finder", "apertureSize",  apertureSize );
+    ini->put("Goal Finder", "thetaGabor",  thetaGabor );
+
+}
+
 void goalFinder::initWindow()
 {
     namedWindow("Asli");
@@ -81,6 +129,19 @@ void goalFinder::showImage()
     imshow("Canny", hasilCanny);
     imshow("Morph", hasilMorph);
 }
+
+void goalFinder::process(Mat m)
+{
+    GetInstance()->setGambar(m);
+    GetInstance()->morphOps();
+    GetInstance()->gabor();
+    GetInstance()->canny();
+    GetInstance()->HLP();
+    GetInstance()->adaGawang();
+    GetInstance()->showData();
+    GetInstance()->showImage();
+}
+
 //Image Processing
 void goalFinder::morphOps()
 {

@@ -9,6 +9,8 @@
 using namespace std;
 using namespace cv;
 
+#define INI_FILE_PATH "data/config.ini"
+
 int main(int argc,  char** argv)
 {
     VideoCapture cap;
@@ -25,8 +27,8 @@ int main(int argc,  char** argv)
         clear();
         refresh();
         Mat gambar;
-        goalFinder gF;
-        gF.init();
+        minIni* ini = new minIni(INI_FILE_PATH);
+        goalFinder::GetInstance()->init(ini);
         //positionChecker pC;
         //cap >> gambar;
         //pC.setGambar(gambar);
@@ -34,7 +36,8 @@ int main(int argc,  char** argv)
         for (;;)
         {
             cap >> gambar;
-            
+            goalFinder::GetInstance()->process(gambar);
+            /*
             gF.setGambar(gambar);
             //Pre-Processing
             gF.morphOps();
@@ -45,6 +48,7 @@ int main(int argc,  char** argv)
             gF.adaGawang();
             gF.showData();  
             gF.showImage();
+            */
             /*
             pC.setGambar(gambar);
             pC.filterGambar();
@@ -56,6 +60,7 @@ int main(int argc,  char** argv)
                 break;
             refresh();
         }
+        goalFinder::GetInstance()->saveINI(ini);
         endwin();
     }
 }
