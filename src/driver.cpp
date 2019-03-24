@@ -1,21 +1,22 @@
-#include "include/goalFinder.h"
-#include "include/positionChecker.h"
+#include "goalFinder.h"
 #include "opencv2/core.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/highgui.hpp"
 #include "opencv2/opencv.hpp"
 #include <vector>
 #include <curses.h>
+#include <string>
 using namespace std;
 using namespace cv;
 
 #define INI_FILE_PATH "data/config.ini"
 
-int main(int argc,  char** argv)
+int main(int argc, char **argv)
 {
     VideoCapture cap;
     string namaVideo = "Video Test/crossbar(360).mp4";
-    int nomorKamera = argv[0][0] - '0';
+    int nomorKamera = argv[1][0] - '0';
+    cout << nomorKamera << endl;
     if (!cap.open(nomorKamera))
     {
         cout << "Gagal buka";
@@ -27,8 +28,8 @@ int main(int argc,  char** argv)
         clear();
         refresh();
         Mat gambar;
-        minIni* ini = new minIni(INI_FILE_PATH);
-        goalFinder::GetInstance()->init(ini);
+        minIni *ini = new minIni(INI_FILE_PATH);
+        GoalPerceptor::GetInstance()->init(ini);
         //positionChecker pC;
         //cap >> gambar;
         //pC.setGambar(gambar);
@@ -36,7 +37,7 @@ int main(int argc,  char** argv)
         for (;;)
         {
             cap >> gambar;
-            goalFinder::GetInstance()->process(gambar);
+            GoalPerceptor::GetInstance()->process(gambar);
             /*
             gF.setGambar(gambar);
             //Pre-Processing
@@ -56,11 +57,12 @@ int main(int argc,  char** argv)
             pC.showImage();
             pC.showDataInConsole();
             */
+            
             if (waitKey(40) == 27)
                 break;
             refresh();
         }
-        goalFinder::GetInstance()->saveINI(ini);
+        GoalPerceptor::GetInstance()->saveINI(ini);
         endwin();
     }
 }
