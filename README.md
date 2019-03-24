@@ -1,6 +1,11 @@
 # Deteksi-Garis
 Deteksi Garis menggunakkan OpenCV (C++)
 
-'''
-    g++ -I. src/GoalPerceptorAditya.cpp src/positionChecker.cpp src/driver.cpp -o a.out -lncurses `pkg-config --cflags --libs opencv` && ./a.out
-'''
+## Compile & run dengan
+```
+    make clean
+    make
+    ./a.o nomorWebcam
+```
+nomorWebcam = 0 (default webcam) <br>
+nomorWebcam > 0 (webcam lainnya)
